@@ -18,6 +18,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Verify password
         if (password_verify($password, $user["password"])) {
+            // Prevent session fixation
+            if (function_exists('session_regenerate_id')) {
+                session_regenerate_id(true);
+            }
             // Store session
             $_SESSION["user_id"] = $user["id"];
             $_SESSION["fullname"] = $user["fullname"];

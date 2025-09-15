@@ -3,7 +3,7 @@ session_start();
 
 // If user not logged in, redirect to login
 if (!isset($_SESSION["user_id"])) {
-    header("Location: login.html");
+    header("Location: login_users.php");
     exit();
 }
 
@@ -204,7 +204,7 @@ $user = $result->fetch_assoc();
         <?php if (!empty($user["profile_image"])): ?>
             <img src="uploads/<?php echo htmlspecialchars($user['profile_image']); ?>" alt="Profile Picture">
         <?php else: ?>
-            <img src="uploads/default.png" alt="Default Profile Picture">
+            <img src="uploads/default-avatar.svg" alt="Default Profile Picture">
         <?php endif; ?>
 
         <form method="POST" enctype="multipart/form-data">

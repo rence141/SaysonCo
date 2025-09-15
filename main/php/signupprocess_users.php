@@ -37,6 +37,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Get the newly created user's ID
         $new_user_id = $conn->insert_id;
         
+        // Prevent session fixation
+        if (function_exists('session_regenerate_id')) {
+            session_regenerate_id(true);
+        }
         // Automatically log the user in by setting session variables
         $_SESSION["user_id"] = $new_user_id;
         $_SESSION["fullname"] = $fullname;

@@ -1,35 +1,4 @@
-<?php
-$error = "";
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $fullname = $_POST['fullname'];
-    $email = $_POST['email'];
-    $phone = $_POST['phone'];
-    $password = $_POST['password'];
-    $confirm = $_POST['confirm_password'];
-
-    if ($password !== $confirm) {
-        $error = "Passwords do not match!";
-    } else {
-        // connect to DB
-        $conn = new mysqli("localhost", "root", "", "myshop");
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
-
-        $hashed = password_hash($password, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO users (fullname, email, phone, password) 
-                VALUES ('$fullname', '$email', '$phone', '$hashed')";
-        
-        if ($conn->query($sql)) {
-            echo "Signup successful!";
-        } else {
-            $error = "Error: " . $conn->error;
-        }
-        $conn->close();
-    }
-}
-?>
+<?php $error = isset($_GET['error']) ? $_GET['error'] : ""; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -135,7 +104,7 @@ body {
       <input type="password" name="confirm_password" placeholder="Confirm Password" required>
       <button type="submit">Sign Up</button>
       <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
-    </form
+    </form>
     <p> Already have an account? <a href="login_users.php">Login</a></p>
   </div>
 </body>
