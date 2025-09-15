@@ -1138,6 +1138,7 @@ if (isset($_SESSION['user_id'])) {
       }
     ?>
   </div>
+  <button class="carousel-arrow left" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:var(--accent);color:var(--bg-primary);border:none;border-radius:50%;width:40px;height:40px;font-size:2rem;z-index:2;cursor:pointer;">&#8592;</button>
   <button class="carousel-arrow right" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--accent);color:var(--bg-primary);border:none;border-radius:50%;width:40px;height:40px;font-size:2rem;z-index:2;cursor:pointer;">&#8594;</button>
 </div>
 
@@ -1541,22 +1542,26 @@ if (isset($_SESSION['user_id'])) {
     showSlide(current);
   }
 
-  leftArrow.addEventListener('click', function() {
-    prevSlide();
-    resetInterval();
-  });
+  if (leftArrow) {
+    leftArrow.addEventListener('click', function() {
+      prevSlide();
+      resetInterval();
+    });
+  }
 
-  rightArrow.addEventListener('click', function() {
-    nextSlide();
-    resetInterval();
-  });
+  if (rightArrow) {
+    rightArrow.addEventListener('click', function() {
+      nextSlide();
+      resetInterval();
+    });
+  }
 
   function resetInterval() {
     clearInterval(interval);
     interval = setInterval(nextSlide, 3000); // Infinite auto loop
   }
 
-  if (items.length > 0) {
+  if (items && items.length > 0) {
     showSlide(current);
     interval = setInterval(nextSlide, 3000); // Infinite auto loop
   }
