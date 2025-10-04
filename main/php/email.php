@@ -1,72 +1,52 @@
 <?php
-// email.php - SMTP-aware mail sender using PHPMailer if available
+session_start();
+require_once __DIR__ . '/../../vendor/autoload.php';
 
-// Load Composer autoload
-require_once __DIR__ . '/../../vendor/autoload.php'; // Adjusted for /var/www/html/main/php/email.php
+function send_email($to, $subject, $body) {
+    $client = new Google_Client();
+    $client->setAuthConfig(__DIR__ . '/google_credentials.json');
+    $client->addScope(Google_Service_Gmail::GMAIL_SEND);
+    $client->setAccessType('offline');
 
-/**
- * Send an email via SMTP (PHPMailer) or fallback to mail()
- *
- * @param string $to Recipient email
- * @param string $subject Email subject
- * @param string $body Email body (plain text or HTML)
- * @param string|null $from Optional sender email
- * @param string|null $fromName Optional sender name
- * @return bool True if sent successfully
- */
-function send_email($to, $subject, $body, $from = null, $fromName = null) {
-    $to = (string)$to;
-    if ($to === '') {
+    // Load tokens
+    $tokenPath = __DIR__ . '/gmail_tokens.json';
+    if (!file_exists($tokenPath)) {
+        error_log("No token file found. Run google_login.php first.");
         return false;
     }
+    $token = json_decode(file_get_contents($tokenPath), true);
+    $client->setAccessToken($token);
 
-    // Use environment variables if not explicitly passed
-    $from = $from ?: getenv('SMTP_FROM') ?: 'no-reply@meta-shark.local';
-    $fromName = $fromName ?: getenv('SMTP_FROM_NAME') ?: 'Meta Shark';
-    $smtpEnabled = getenv('SMTP_ENABLED') !== 'false'; // default true
-
-    // Try PHPMailer if available and SMTP enabled
-    if ($smtpEnabled && class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
-        try {
-            $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-
-            $mail->isSMTP();
-            $mail->Host       = getenv('SMTP_USER') ?: 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = getenv('SMTP_USERNAME');
-            $mail->Password   = getenv('SMTP_PASSWORD');
-
-            $secure = strtolower(getenv('SMTP_SECURE') ?: 'tls');
-            if ($secure === 'ssl') {
-                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
-                $mail->Port       = 465;
-            } else {
-                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port       = getenv('SMTP_PORT') ?: 587;
-            }
-
-            $mail->setFrom($from, $fromName);
-            $mail->addAddress($to);
-            $mail->Subject = $subject;
-            $mail->Body    = $body;
-            $mail->AltBody = strip_tags($body);
-
-            $mail->send();
-            return true;
-        } catch (\PHPMailer\PHPMailer\Exception $e) {
-            error_log("PHPMailer Error: " . $mail->ErrorInfo);
-            // fallback to mail()
+    // Refresh if expired
+    if ($client->isAccessTokenExpired()) {
+        if (isset($token['refresh_token'])) {
+            $client->fetchAccessTokenWithRefreshToken($token['refresh_token']);
+            file_put_contents($tokenPath, json_encode($client->getAccessToken()));
+        } else {
+            error_log("Refresh token missing. Re-authorize the app.");
+            return false;
         }
-    } elseif ($smtpEnabled) {
-        error_log("PHPMailer class not found. Run `composer require phpmailer/phpmailer` in project root.");
     }
 
-    // Fallback to PHP mail() if PHPMailer fails or is unavailable
-    $headers = [
-        'From: ' . $from,
-        'MIME-Version: 1.0',
-        'Content-Type: text/plain; charset=UTF-8'
-    ];
+    $service = new Google_Service_Gmail($client);
 
-    return @mail($to, $subject, $body, implode("\r\n", $headers));
+    $rawMessage = "From: Meta Shark <metshark@example.com>\r\n";
+    $rawMessage .= "To: <$to>\r\n";
+    $rawMessage .= "Subject: $subject\r\n";
+    $rawMessage .= "MIME-Version: 1.0\r\n";
+    $rawMessage .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+    $rawMessage .= $body;
+
+    $mime = rtrim(strtr(base64_encode($rawMessage), '+/', '-_'), '=');
+
+    $msg = new Google_Service_Gmail_Message();
+    $msg->setRaw($mime);
+
+    try {
+        $service->users_messages->send('me', $msg);
+        return true;
+    } catch (Exception $e) {
+        error_log("Gmail API Error: " . $e->getMessage());
+        return false;
+    }
 }
