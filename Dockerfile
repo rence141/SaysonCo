@@ -1,17 +1,23 @@
-# Use official PHP image with Apache
+# Use official PHP + Apache image
 FROM php:8.2-apache
 
-# Install system dependencies for PostgreSQL
-RUN apt-get update && apt-get install -y libpq-dev
+# Enable PHP extensions if needed
+RUN docker-php-ext-install mysqli pdo pdo_mysql
 
-# Install PHP extensions (MySQL + PostgreSQL)
-RUN docker-php-ext-install mysqli pdo pdo_mysql pgsql pdo_pgsql
-
-# Copy project files into container
-COPY . /var/www/html/
+# Enable mod_rewrite for Apache
+RUN a2enmod rewrite
 
 # Set working directory
-WORKDIR /var/www/html/
+WORKDIR /var/www/html
 
-# Expose Apache port
+# Copy project files
+COPY . /var/www/html/
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+# Expose port 80
 EXPOSE 80
