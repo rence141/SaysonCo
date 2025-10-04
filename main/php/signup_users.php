@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up - MyShop</title>
-  <link rel="icon" type="image/png" href="Uploads/logo1.png">
+  <link rel="icon" type="image/png" href="uploads/logo1.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <style>
 /* General Styles */
@@ -612,7 +612,7 @@ window.ThemeSystem = ThemeSystem;
 </head>
 <body>
   <div class="form-container">
-    <img src="Uploads/logo1.png" alt="MyShop Logo" class="logo">
+    <img src="uploads/logo1.png" alt="MyShop Logo" class="logo">
     <h2>Create Meta Shark Account</h2>
 
     <form action="signupprocess_users.php" method="POST">

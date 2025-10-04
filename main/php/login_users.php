@@ -478,7 +478,7 @@ $error = isset($_GET['error']) ? $_GET['error'] : "";
   </div>
 
   <div class="form-container">
-    <img src="Uploads/logo1.png" alt="MyShop Logo" class="logo">
+    <img src="uploads/logo1.png" alt="MyShop Logo" class="logo">
     <h2>Meta Shark Login</h2>
 
     <form action="loginprocess_users.php" method="POST" id="loginForm">
