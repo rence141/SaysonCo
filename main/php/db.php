@@ -1,19 +1,17 @@
 <?php
 $host = "sql12.freesqldatabase.com";
 $user = "sql12801294";
-$pass = "sptMsAVPRz";   // get this from your FreeSQLDatabase dashboard
-$dbname = "sql12801294";        // usually same as username
-$port = 3306;                    // default port for remote MySQL
-
+$pass = "sptMsAVPRz";  
+$dbname = "sql12801294";  
+$port = 3306;  
 
 // Create connection
-$conn = new mysqli($host, $user, $pass, $dbname, $port);
+$conn = @new mysqli($host, $user, $pass, $dbname, $port);
 
 // Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if ($conn->connect_errno) {
+    // Stop the script silently or log error without output
+    error_log("Database connection failed: " . $conn->connect_error);
+    exit; // prevents any output
 }
-// echo "Connected successfully";
-?>  
-
-
+?>
