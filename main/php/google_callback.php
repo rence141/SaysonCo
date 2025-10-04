@@ -4,7 +4,11 @@ include("db.php");
 session_start();
 
 $client = new Google_Client();
-$client->setAuthConfig('C:/xampp/secure-config/credentials.json');
+
+// Use Render secret file path
+$client->setAuthConfig('/etc/secrets/credentials.json');  
+
+// Use your live redirect URI
 $client->setRedirectUri('https://meta-shark.onrender.com/main/php/google_callback.php');
 $client->addScope("email");
 $client->addScope("profile");
@@ -26,12 +30,6 @@ if (isset($_GET['code'])) {
     $_SESSION['google_email'] = $googleUser->email;
     $_SESSION['google_name'] = $googleUser->name;
 
-    // Log for debugging
-    error_log("Google callback set session: email=" . $googleUser->email . ", name=" . $googleUser->name);
-
-    // Ensure session is written
-    session_write_close();
-
     // Redirect to google_login_process.php
     header("Location: https://meta-shark.onrender.com/main/php/google_login_process.php");
     exit;
@@ -41,4 +39,5 @@ if (isset($_GET['code'])) {
     header("Location: ../../login_users.php?error=Google login failed");
     exit;
 }
+
 ?>
