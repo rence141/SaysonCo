@@ -1,21 +1,26 @@
 <?php
-session_start();
-if (!isset($_SESSION['pending_verification_user_id'])) {
-    header("Location: login_users.php");
-    exit();
-}
-?>
+include("db.php");
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Verify Account</title>
-</head>
-<body>
-<h2>Enter Verification Code</h2>
-<form action="confirm_otp.php" method="POST">
-    <input type="text" name="otp" placeholder="6-digit code" required>
-    <button type="submit">Verify</button>
-</form>
-</body>
-</html>
+if (isset($_GET['token']) && isset($_GET['email'])) {
+    $token = $_GET['token'];
+    $email = $_GET['email'];
+
+    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? AND verification_token = ? AND is_verified = 0 LIMIT 1");
+    $stmt->bind_param("ss", $email, $token);
+    $stmt->execute();
+    $stmt->store_result();
+
+    if ($stmt->num_rows > 0) {
+        $update = $conn->prepare("UPDATE users SET is_verified = 1, verification_token = NULL WHERE email = ?");
+        $update->bind_param("s", $email);
+        $update->execute();
+
+        echo "✅ Email verified successfully! You can now <a href='login_users.php'>login</a>.";
+    } else {
+        echo "❌ Invalid or expired verification link.";
+    }
+
+    $stmt->close();
+}
+$conn->close();
+?>

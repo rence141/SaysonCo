@@ -1,6 +1,8 @@
 <?php
 session_start();
 include("db.php");
+require_once "send_email.php";
+ // Gmail API send_email function
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fullname = trim($_POST["fullname"]);
@@ -11,7 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Validate password match
     if ($password !== $confirm_password) {
-        die("<p style='color:red;'>Passwords do not match. <a href='signup.html'>Try again</a></p>");
+        die("<p style='color:red;'>Passwords do not match. <a href='signup_users.php'>Try again</a></p>");
     }
 
     // Check if email already exists
@@ -21,49 +23,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $checkEmail->store_result();
 
     if ($checkEmail->num_rows > 0) {
-        die("<p style='color:red;'>Email already registered. <a href='signup.html'>Try again</a></p>");
+        die("<p style='color:red;'>Email already registered. <a href='signup_users.php'>Try again</a></p>");
     }
     $checkEmail->close();
 
     // Hash the password
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-    // Insert user into DB
-    $sql = "INSERT INTO users (fullname, email, phone, password) VALUES (?, ?, ?, ?)";
+    // Generate verification token
+    $token = bin2hex(random_bytes(32));
+
+    // Insert user with verification_token and is_verified = 0
+    $sql = "INSERT INTO users (fullname, email, phone, password, verification_token, is_verified) VALUES (?, ?, ?, ?, ?, 0)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssss", $fullname, $email, $phone, $hashedPassword);
+    $stmt->bind_param("sssss", $fullname, $email, $phone, $hashedPassword, $token);
 
     if ($stmt->execute()) {
-        // Get the newly created user's ID
-        $new_user_id = $conn->insert_id;
+        $verify_link = "http://yourdomain.com/php/verify.php?token=$token&email=" . urlencode($email);
 
-        // Set default profile image if column exists and is empty
-        $colCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'profile_image'");
-        if ($colCheck && $colCheck->num_rows > 0) {
-            $upd = $conn->prepare("UPDATE users SET profile_image = 'default-avatar.svg' WHERE id = ? AND (profile_image IS NULL OR profile_image = '')");
-            if ($upd) { $upd->bind_param("i", $new_user_id); $upd->execute(); }
-        }
-        
-        // Automatically log the user in by setting session variables
-        $_SESSION["user_id"] = $new_user_id;
-        $_SESSION["fullname"] = $fullname;
-        $_SESSION["email"] = $email;
-        
-        // Redirect to main page (user is now logged in)
-        header("Location: login_users.php");
-        exit();
+        $subject = "Verify your Meta Shark Account";
+        $body = "
+            <h2>Welcome to Meta Shark!</h2>
+            <p>Hi <b>$fullname</b>,</p>
+            <p>Please verify your email by clicking the link below:</p>
+            <p><a href='$verify_link'>Verify My Email</a></p>
+            <br>
+            <p>If you did not sign up, please ignore this email.</p>
+        ";
+
+        send_verification_email($email, $token);
+
+
+        echo "<p style='color:green;'>Signup successful! Please check your email to verify your account.</p>";
     } else {
         die("<p style='color:red;'>Error: Could not register user. <a href='signup_users.php'>Try again</a></p>");
     }
 }
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up Process</title>
-      <link rel="icon" type="image/png" href="uploads/logo1.png">
-
-</html>
