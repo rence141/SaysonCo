@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_param("sssss", $fullname, $email, $phone, $hashedPassword, $token);
 
     if ($stmt->execute()) {
-        $verify_link = "http://yourdomain.com/php/verify.php?token=$token&email=" . urlencode($email);
+        $verify_link = "http://yourdomain.com/php/verify_account.php?token=$token&email=" . urlencode($email);
 
         $subject = "Verify your Meta Shark Account";
         $body = "
