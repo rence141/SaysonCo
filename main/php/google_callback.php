@@ -5,7 +5,7 @@ session_start();
 
 $client = new Google_Client();
 $client->setAuthConfig('C:/xampp/secure-config/credentials.json');
-$client->setRedirectUri('http://localhost/SaysonCo/main/php/google_callback.php');
+$client->setRedirectUri('https://meta-shark.onrender.com/main/php/google_callback.php');
 $client->addScope("email");
 $client->addScope("profile");
 
@@ -33,8 +33,9 @@ if (isset($_GET['code'])) {
     session_write_close();
 
     // Redirect to google_login_process.php
-    header("Location: http://localhost/SaysonCo/main/php/google_login_process.php");
+    header("Location: https://meta-shark.onrender.com/main/php/google_login_process.php");
     exit;
+    
 } else {
     error_log("Google OAuth code not provided");
     header("Location: ../../login_users.php?error=Google login failed");
