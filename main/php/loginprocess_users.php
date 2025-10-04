@@ -1,6 +1,7 @@
 <?php
 session_start();
 include("db.php");
+require_once __DIR__ . '/email.php';
 include_once("email.php");
 include_once("contacts_sync.php");
 

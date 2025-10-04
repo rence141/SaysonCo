@@ -1,6 +1,8 @@
 
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Check if user is logged in and is a seller
 if (!isset($_SESSION["user_id"])) {
