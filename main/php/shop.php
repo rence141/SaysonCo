@@ -1398,7 +1398,7 @@ if (isset($_SESSION['user_id'])) {
   <div class="footer-content">
     <div class="footer-top">
       <div class="footer-logo">
-        <img src="Uploads/logo1.png" alt="Meta Shark Logo">
+        <img src="uploads/logo1.png" alt="Meta Shark Logo">
         <h3>Meta Shark</h3>
       </div>
       <ul class="footer-links">
