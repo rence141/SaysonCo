@@ -1,69 +1,12 @@
 <?php
 session_start();
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/send_verification_email.php';
 
-// Load environment variables
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
-$dotenv->load();
-
-// Function to send Gmail verification email
-function send_verification_email($to, $verificationLink) {
-    $client = new Google_Client();
-    $client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
-    $client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
-    $client->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI']);
-    $client->addScope(Google_Service_Gmail::GMAIL_SEND);
-    $client->setAccessType('offline');
-
-    // Load tokens from session (or database)
-    if (!isset($_SESSION['access_token']) || !isset($_SESSION['refresh_token'])) {
-        error_log("No Gmail tokens available. Authorize first.");
-        return false;
-    }
-
-    $client->setAccessToken([
-        'access_token' => $_SESSION['access_token'],
-        'refresh_token' => $_SESSION['refresh_token']
-    ]);
-
-    // Refresh token if expired
-    if ($client->isAccessTokenExpired()) {
-        $client->fetchAccessTokenWithRefreshToken($_SESSION['refresh_token']);
-        $_SESSION['access_token'] = $client->getAccessToken()['access_token'];
-    }
-
-    $service = new Google_Service_Gmail($client);
-
-    $subject = "Verify Your MetaShark Account";
-    $body = "Hello,<br><br>Click this link to verify your account:<br><a href='$verificationLink'>$verificationLink</a><br><br>Thanks!";
-
-    $rawMessage = "From: Meta Shark <me@example.com>\r\n";
-    $rawMessage .= "To: <$to>\r\n";
-    $rawMessage .= "Subject: $subject\r\n";
-    $rawMessage .= "MIME-Version: 1.0\r\n";
-    $rawMessage .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
-    $rawMessage .= $body;
-
-    $mime = rtrim(strtr(base64_encode($rawMessage), '+/', '-_'), '=');
-
-    $msg = new Google_Service_Gmail_Message();
-    $msg->setRaw($mime);
-
-    try {
-        $service->users_messages->send('me', $msg);
-        return true;
-    } catch (Exception $e) {
-        error_log("Gmail API Error: " . $e->getMessage());
-        return false;
-    }
-}
-
-// Main logic
 if (isset($_GET['email'])) {
     $email = filter_var($_GET['email'], FILTER_VALIDATE_EMAIL);
 
     if ($email) {
-        // Generate verification token
+        // Generate a verification token
         $token = bin2hex(random_bytes(16));
         $verificationLink = "https://meta-shark.onrender.com/main/php/confirm_email.php?email=$email&token=$token";
 
@@ -80,3 +23,4 @@ if (isset($_GET['email'])) {
 } else {
     echo "No email specified.";
 }
+?>

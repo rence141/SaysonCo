@@ -2,35 +2,40 @@
 session_start();
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-function send_email($to, $subject, $body) {
+/**
+ * Send a Gmail email using API.
+ * 
+ * @param string $to Recipient email
+ * @param string $subject Email subject
+ * @param string $body Email body (HTML)
+ * @return bool Success status
+ */
+function send_gmail_email($to, $subject, $body) {
     $client = new Google_Client();
-    $client->setAuthConfig(__DIR__ . '/google_credentials.json');
+    $client->setClientId($_ENV['GOOGLE_CLIENT_ID']);
+    $client->setClientSecret($_ENV['GOOGLE_CLIENT_SECRET']);
+    $client->setRedirectUri($_ENV['GOOGLE_REDIRECT_URI']);
     $client->addScope(Google_Service_Gmail::GMAIL_SEND);
     $client->setAccessType('offline');
 
-    // Load tokens
-    $tokenPath = __DIR__ . '/gmail_tokens.json';
-    if (!file_exists($tokenPath)) {
-        error_log("No token file found. Run google_login.php first.");
+    if (!isset($_SESSION['access_token']) || !isset($_SESSION['refresh_token'])) {
+        error_log("No Gmail tokens available. Authorize first.");
         return false;
     }
-    $token = json_decode(file_get_contents($tokenPath), true);
-    $client->setAccessToken($token);
 
-    // Refresh if expired
+    $client->setAccessToken([
+        'access_token' => $_SESSION['access_token'],
+        'refresh_token' => $_SESSION['refresh_token']
+    ]);
+
     if ($client->isAccessTokenExpired()) {
-        if (isset($token['refresh_token'])) {
-            $client->fetchAccessTokenWithRefreshToken($token['refresh_token']);
-            file_put_contents($tokenPath, json_encode($client->getAccessToken()));
-        } else {
-            error_log("Refresh token missing. Re-authorize the app.");
-            return false;
-        }
+        $client->fetchAccessTokenWithRefreshToken($_SESSION['refresh_token']);
+        $_SESSION['access_token'] = $client->getAccessToken()['access_token'];
     }
 
     $service = new Google_Service_Gmail($client);
 
-    $rawMessage = "From: Meta Shark <metshark@example.com>\r\n";
+    $rawMessage = "From: Meta Shark <me@example.com>\r\n";
     $rawMessage .= "To: <$to>\r\n";
     $rawMessage .= "Subject: $subject\r\n";
     $rawMessage .= "MIME-Version: 1.0\r\n";
@@ -50,3 +55,4 @@ function send_email($to, $subject, $body) {
         return false;
     }
 }
+?>

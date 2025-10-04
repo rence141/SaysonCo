@@ -1,4 +1,5 @@
 <?php
+session_start();
 // Handle image upload
 if (!empty($_FILES["profile_image"]["name"])) {
     // Absolute path inside container
