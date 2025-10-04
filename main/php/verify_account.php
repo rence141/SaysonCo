@@ -1,26 +1,21 @@
 <?php
 session_start();
-require_once __DIR__ . '/send_verification_email.php';
-
-if (isset($_GET['email'])) {
-    $email = filter_var($_GET['email'], FILTER_VALIDATE_EMAIL);
-
-    if ($email) {
-        // Generate a verification token
-        $token = bin2hex(random_bytes(16));
-        $verificationLink = "https://meta-shark.onrender.com/main/php/confirm_email.php?email=$email&token=$token";
-
-        // TODO: Save $token in your DB associated with the user
-
-        if (send_verification_email($email, $verificationLink)) {
-            echo "Verification email sent to $email";
-        } else {
-            echo "Failed to send verification email. Check logs.";
-        }
-    } else {
-        echo "Invalid email address.";
-    }
-} else {
-    echo "No email specified.";
+if (!isset($_SESSION['pending_verification_user_id'])) {
+    header("Location: login_users.php");
+    exit();
 }
 ?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Account</title>
+</head>
+<body>
+<h2>Enter Verification Code</h2>
+<form action="confirm_otp.php" method="POST">
+    <input type="text" name="otp" placeholder="6-digit code" required>
+    <button type="submit">Verify</button>
+</form>
+</body>
+</html>

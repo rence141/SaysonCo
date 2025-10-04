@@ -1,8 +1,8 @@
 
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
+require_once("db.php"); // ok to include after session_start()
+
 
 // Check if user is logged in and is a seller
 if (!isset($_SESSION["user_id"])) {
