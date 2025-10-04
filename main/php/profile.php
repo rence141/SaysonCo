@@ -1,54 +1,36 @@
 <?php
-session_start();
+// Handle image upload
+if (!empty($_FILES["profile_image"]["name"])) {
+    // Absolute path inside container
+    $targetDir = __DIR__ . "/uploads/";
 
-// Debug: Log session data to verify variables
-error_log("Profile.php session data: " . print_r($_SESSION, true));
-
-// If user not logged in, redirect to login
-if (!isset($_SESSION["user_id"])) {
-    header("Location: login_users.php");
-    exit();
-}
-
-include("db.php");
-
-$user_id = $_SESSION["user_id"];
-
-// Handle profile update
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $fullname = trim($_POST["fullname"]);
-    $email = trim($_POST["email"]);
-    $phone = trim($_POST["phone"]);
-    $new_password = trim($_POST["password"]);
-    $profile_image = null;
-
-    // Handle image upload
-    if (!empty($_FILES["profile_image"]["name"])) {
-        $targetDir = "Uploads/";
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0777, true);
+    // Ensure directory exists and is writable
+    if (!is_dir($targetDir)) {
+        if (!mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+            error_log("Failed to create uploads directory: $targetDir");
+            $error = "Server error: cannot create upload directory.";
         }
+    }
 
-        // Get current profile image to delete it later
-        $currentImageQuery = "SELECT profile_image FROM users WHERE id = ?";
-        $currentImageStmt = $conn->prepare($currentImageQuery);
-        $currentImageStmt->bind_param("i", $user_id);
-        $currentImageStmt->execute();
-        $currentImageResult = $currentImageStmt->get_result();
-        $currentImage = $currentImageResult->fetch_assoc()['profile_image'];
-
+    if (empty($error)) {
         $fileName = $user_id . "_" . time() . "_" . basename($_FILES["profile_image"]["name"]);
         $targetFilePath = $targetDir . $fileName;
         $fileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
 
-        // Allow only jpg, jpeg, png
         $allowedTypes = ["jpg", "jpeg", "png"];
         if (in_array($fileType, $allowedTypes)) {
             if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $targetFilePath)) {
                 $profile_image = $fileName;
-                
-                // Delete old profile image if it exists
-                if (!empty($currentImage) && file_exists($targetDir . $currentImage)) {
+
+                // Delete old profile image if exists
+                $currentImageQuery = "SELECT profile_image FROM users WHERE id = ?";
+                $currentImageStmt = $conn->prepare($currentImageQuery);
+                $currentImageStmt->bind_param("i", $user_id);
+                $currentImageStmt->execute();
+                $currentImageResult = $currentImageStmt->get_result();
+                $currentImage = $currentImageResult->fetch_assoc()['profile_image'] ?? null;
+
+                if ($currentImage && file_exists($targetDir . $currentImage)) {
                     unlink($targetDir . $currentImage);
                 }
             } else {
@@ -58,55 +40,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $error = "Only JPG, JPEG, and PNG files are allowed.";
         }
     }
-
-    // If password is provided, update with hashing
-    if (!empty($new_password)) {
-        $hashedPassword = password_hash($new_password, PASSWORD_DEFAULT);
-
-        if ($profile_image) {
-            $sql = "UPDATE users SET fullname=?, email=?, phone=?, password=?, profile_image=? WHERE id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssssi", $fullname, $email, $phone, $hashedPassword, $profile_image, $user_id);
-        } else {
-            $sql = "UPDATE users SET fullname=?, email=?, phone=?, password=? WHERE id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssi", $fullname, $email, $phone, $hashedPassword, $user_id);
-        }
-    } else {
-        if ($profile_image) {
-            $sql = "UPDATE users SET fullname=?, email=?, phone=?, profile_image=? WHERE id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssi", $fullname, $email, $phone, $profile_image, $user_id);
-        } else {
-            $sql = "UPDATE users SET fullname=?, email=?, phone=? WHERE id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssi", $fullname, $email, $phone, $user_id);
-        }
-    }
-
-    if ($stmt->execute()) {
-        $_SESSION["name"] = $fullname; // Update session name to align with shop.php
-        $success = "Profile updated successfully!";
-        
-        // Log update
-        if ($profile_image) {
-            $success .= " Profile image updated to: " . $profile_image;
-        }
-    } else {
-        $error = "Error updating profile: " . $conn->error;
-    }
 }
 
-// Fetch user info
-$sql = "SELECT id, fullname, email, phone, profile_image FROM users WHERE id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-
-// Set default profile image path
-$default_profile_image = "Uploads/Logo.png"; // Replace with your image filename
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -114,11 +49,12 @@ $default_profile_image = "Uploads/Logo.png"; // Replace with your image filename
     <meta charset="UTF-8">
     <title><?php echo htmlspecialchars($user["fullname"]); ?> - Profile</title>
     <link rel="stylesheet" href="fonts/fonts.css">
-    <link rel="icon" type="image/png" href="Uploads/logo1.png">
+    <link rel="icon" type="image/png" href="uploads/logo1.png">
     <style>
+    
         body {
             font-family: Arial, sans-serif;
-            background-image: url('Uploads/');
+            background-image: url('uploads/');
             margin: 0;
             padding: 0;
         }
@@ -213,8 +149,8 @@ $default_profile_image = "Uploads/Logo.png"; // Replace with your image filename
         <?php if (!empty($error)) echo "<div class='message error'>$error</div>"; ?>
 
         <!-- Profile Picture -->
-        <?php if (!empty($user["profile_image"]) && file_exists("Uploads/" . $user["profile_image"])): ?>
-            <img src="Uploads/<?php echo htmlspecialchars($user['profile_image']); ?>" alt="Profile Picture">
+        <?php if (!empty($user["profile_image"]) && file_exists("uploads/" . $user["profile_image"])): ?>
+            <img src="main/php/Uploads/<?php echo htmlspecialchars($user['profile_image']); ?>" alt="Profile Picture">
         <?php else: ?>
             <img src="<?php echo htmlspecialchars($default_profile_image); ?>" alt="Default Profile Picture">
         <?php endif; ?>

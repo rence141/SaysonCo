@@ -18,6 +18,14 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . /var/www/html/
 
+# Create uploads folder and set permissions
+RUN mkdir -p /var/www/html/main/php/Uploads \
+    && chown -R www-data:www-data /var/www/html/main/php/Uploads \
+    && chmod -R 775 /var/www/html/main/php/Uploads
+
+# Declare uploads as a volume for persistence
+VOLUME /var/www/html/main/php/Uploads
+
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
