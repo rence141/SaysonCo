@@ -4,6 +4,11 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/aiConfig.php';
 
+// Import Google API classes
+use Google\Client as Google_Client;
+use Google\Service\Gmail as Google_Service_Gmail;
+use Google\Service\Gmail\Message as Google_Service_Gmail_Message;
+
 /**
  * Send an email using Gmail API
  * 
@@ -24,8 +29,15 @@ function send_email($to, $subject, $body) {
         
         // Check if we have tokens in session
         if (!isset($_SESSION['gmail_access_token'])) {
-            // Use service account for background operations
-            $client->setRedirectUri('https://meta-shark.onrender.com/main/php/google_callback.php');
+            // Redirect to authentication page if no token is available
+            $auth_url = get_gmail_auth_url();
+            $_SESSION['email_pending'] = [
+                'to' => $to,
+                'subject' => $subject,
+                'body' => $body
+            ];
+            header('Location: ' . $auth_url);
+            exit;
         } else {
             $client->setAccessToken($_SESSION['gmail_access_token']);
             
