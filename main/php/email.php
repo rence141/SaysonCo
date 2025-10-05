@@ -15,17 +15,17 @@ require_once __DIR__ . '/aiConfig.php';
 function send_email($to, $subject, $body) {
     try {
         $client = new Google_Client();
-        $client->setClientId(getenv('GOOGLE_CLIENT_ID'));
-        $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET'));
+        $client->setApplicationName('SaysonCo Email System');
+        $client->setAuthConfig(__DIR__ . '/google_credentials.json');
         $client->addScope(Google_Service_Gmail::GMAIL_SEND);
         $client->addScope(Google_Service_Gmail::GMAIL_READONLY);
         $client->setAccessType('offline');
+        $client->setPrompt('select_account consent');
         
         // Check if we have tokens in session
         if (!isset($_SESSION['gmail_access_token'])) {
             // Use service account for background operations
-            $client->setAuthConfig(__DIR__ . '/../../credentials.json');
-            $client->useApplicationDefaultCredentials();
+            $client->setRedirectUri('https://meta-shark.onrender.com/main/php/google_callback.php');
         } else {
             $client->setAccessToken($_SESSION['gmail_access_token']);
             
@@ -73,8 +73,8 @@ function send_email($to, $subject, $body) {
 function scan_emails($query = '', $max_results = 10) {
     try {
         $client = new Google_Client();
-        $client->setClientId(getenv('GOOGLE_CLIENT_ID'));
-        $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET'));
+        $client->setApplicationName('SaysonCo Email System');
+        $client->setAuthConfig(__DIR__ . '/google_credentials.json');
         $client->addScope(Google_Service_Gmail::GMAIL_READONLY);
         $client->setAccessType('offline');
         
@@ -144,11 +144,11 @@ function scan_emails($query = '', $max_results = 10) {
  * @param string $redirect_uri Redirect URI after authentication
  * @return string Authentication URL
  */
-function get_gmail_auth_url($redirect_uri) {
+function get_gmail_auth_url($redirect_uri = null) {
     $client = new Google_Client();
-    $client->setClientId(getenv('GOOGLE_CLIENT_ID'));
-    $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET'));
-    $client->setRedirectUri($redirect_uri);
+    $client->setApplicationName('SaysonCo Email System');
+    $client->setAuthConfig(__DIR__ . '/google_credentials.json');
+    $client->setRedirectUri($redirect_uri ?: 'https://meta-shark.onrender.com/main/php/google_callback.php');
     $client->addScope(Google_Service_Gmail::GMAIL_SEND);
     $client->addScope(Google_Service_Gmail::GMAIL_READONLY);
     $client->setAccessType('offline');
@@ -164,12 +164,12 @@ function get_gmail_auth_url($redirect_uri) {
  * @param string $redirect_uri Redirect URI used for authentication
  * @return bool True if authentication successful, false otherwise
  */
-function handle_gmail_callback($code, $redirect_uri) {
+function handle_gmail_callback($code, $redirect_uri = null) {
     try {
         $client = new Google_Client();
-        $client->setClientId(getenv('GOOGLE_CLIENT_ID'));
-        $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET'));
-        $client->setRedirectUri($redirect_uri);
+        $client->setApplicationName('SaysonCo Email System');
+        $client->setAuthConfig(__DIR__ . '/google_credentials.json');
+        $client->setRedirectUri($redirect_uri ?: 'https://meta-shark.onrender.com/main/php/google_callback.php');
         
         $token = $client->fetchAccessTokenWithAuthCode($code);
         
