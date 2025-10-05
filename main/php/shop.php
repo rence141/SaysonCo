@@ -98,7 +98,7 @@ if (isset($_SESSION['user_id'])) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meta Shark</title>
   <link rel="stylesheet" href="fonts/fonts.css">
-  <link rel="icon" type="image/png" href="Uploads/logo1.png">
+  <link rel="icon" type="image/png" href="uploads/logo1.png">
   <link rel="stylesheet" href="../../css/shop.css">
   <link rel="stylesheet" href="../../css/ai_chat.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -1134,10 +1134,10 @@ if (isset($_SESSION['user_id'])) {
       $current_profile_image = $current_profile['profile_image'] ?? null;
       ?>
       <a href="<?php echo $profile_page; ?>">
-        <?php if(!empty($current_profile_image) && file_exists('Uploads/' . $current_profile_image)): ?>
-          <img src="Uploads/<?php echo htmlspecialchars($current_profile_image); ?>" alt="Profile" class="profile-icon">
+        <?php if(!empty($current_profile_image) && file_exists('uploads/' . $current_profile_image)): ?>
+          <img src="uploads/<?php echo htmlspecialchars($current_profile_image); ?>" alt="Profile" class="profile-icon">
         <?php else: ?>
-          <img src="Uploads/Logo.png" alt="Profile" class="profile-icon">
+          <img src="uploads/Logo.png" alt="Profile" class="profile-icon">
         <?php endif; ?>
       </a>
     <?php else: ?>
@@ -1182,7 +1182,7 @@ if (isset($_SESSION['user_id'])) {
     <source src="../../mp4/bateo.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
-  <img src="Uploads/logo1.png" alt="Meta Shark Logo" class="video-logo">
+  <img src="uploads/logo1.png" alt="Meta Shark Logo" class="video-logo">
 </div>
 <!-- Features Section -->
 <div class="features-section">
