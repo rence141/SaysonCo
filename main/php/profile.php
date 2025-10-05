@@ -1,8 +1,8 @@
 <?php
 session_start();
-include("db.php"); // <-- Make sure this connects $conn to your DB
+include("db.php");
 
-// Check if user is logged in
+// Ensure user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -11,22 +11,21 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $success = $error = "";
 
-// Fetch user info
-$stmt = $conn->prepare("SELECT id, first_name, last_name, email, number, gender, language, user_type, profile_image 
-                        FROM signup WHERE id = ?");
+// ✅ Fetch user info from actual table
+$stmt = $conn->prepare("SELECT id, fullname, email, number, profile_image, user_type FROM users WHERE id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
 if (!$user) {
-    die("User not found.");
+    die("User not found in database.");
 }
 
 // Default profile image
-$default_profile_image = "uploads/default.png";
+$default_profile_image = "uploads/default-avatar.svg";
 
-// Handle image upload
+// ✅ Handle image upload
 if (!empty($_FILES["profile_image"]["name"])) {
     $targetDir = __DIR__ . "/uploads/";
 
@@ -37,8 +36,8 @@ if (!empty($_FILES["profile_image"]["name"])) {
     $fileName = $user_id . "_" . time() . "_" . basename($_FILES["profile_image"]["name"]);
     $targetFilePath = $targetDir . $fileName;
     $fileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
+    $allowedTypes = ["jpg", "jpeg", "png", "svg"];
 
-    $allowedTypes = ["jpg", "jpeg", "png"];
     if (in_array($fileType, $allowedTypes)) {
         if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $targetFilePath)) {
             // Delete old image if exists
@@ -47,7 +46,7 @@ if (!empty($_FILES["profile_image"]["name"])) {
             }
 
             // Update DB
-            $stmt = $conn->prepare("UPDATE signup SET profile_image=? WHERE id=?");
+            $stmt = $conn->prepare("UPDATE users SET profile_image=? WHERE id=?");
             $stmt->bind_param("si", $fileName, $user_id);
             $stmt->execute();
 
@@ -57,11 +56,11 @@ if (!empty($_FILES["profile_image"]["name"])) {
             $error = "Error uploading profile image.";
         }
     } else {
-        $error = "Only JPG, JPEG, and PNG files are allowed.";
+        $error = "Only JPG, JPEG, PNG, and SVG files are allowed.";
     }
 }
 
-// Handle profile update
+// ✅ Handle profile update (when not uploading image)
 if ($_SERVER["REQUEST_METHOD"] === "POST" && empty($_FILES["profile_image"]["name"])) {
     $fullname = trim($_POST["fullname"]);
     $email = trim($_POST["email"]);
@@ -70,17 +69,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && empty($_FILES["profile_image"]["nam
 
     if (!empty($password)) {
         $hashed = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("UPDATE signup SET first_name=?, email=?, number=?, password=? WHERE id=?");
+        $stmt = $conn->prepare("UPDATE users SET fullname=?, email=?, number=?, password=? WHERE id=?");
         $stmt->bind_param("ssssi", $fullname, $email, $phone, $hashed, $user_id);
     } else {
-        $stmt = $conn->prepare("UPDATE signup SET first_name=?, email=?, number=? WHERE id=?");
+        $stmt = $conn->prepare("UPDATE users SET fullname=?, email=?, number=? WHERE id=?");
         $stmt->bind_param("sssi", $fullname, $email, $phone, $user_id);
     }
 
     if ($stmt->execute()) {
         $success = "Profile updated successfully.";
-        // refresh $user
-        $user["first_name"] = $fullname;
+        $user["fullname"] = $fullname;
         $user["email"] = $email;
         $user["number"] = $phone;
     } else {
