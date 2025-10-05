@@ -1,8 +1,7 @@
 <?php
 session_start();
 include("db.php");
-require_once "send_email.php";
- // Gmail API send_email function
+require_once "email.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $fullname = trim($_POST["fullname"]);
@@ -39,22 +38,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_param("sssss", $fullname, $email, $phone, $hashedPassword, $token);
 
     if ($stmt->execute()) {
-        $verify_link = "http://yourdomain.com/php/verify_account.php?token=$token&email=" . urlencode($email);
+        // Create verification link with proper domain
+        $domain = (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'];
+        $verify_link = "$domain/main/php/verify_account.php?token=$token&email=" . urlencode($email);
 
-        $subject = "Verify your Meta Shark Account";
+        $subject = "Verify your SaysonCo Account";
         $body = "
-            <h2>Welcome to Meta Shark!</h2>
+            <h2>Welcome to SaysonCo!</h2>
             <p>Hi <b>$fullname</b>,</p>
             <p>Please verify your email by clicking the link below:</p>
-            <p><a href='$verify_link'>Verify My Email</a></p>
+            <p><a href='$verify_link' style='display:inline-block;padding:10px 20px;background:#44D62C;color:#fff;text-decoration:none;border-radius:5px;'>Verify My Email</a></p>
+            <p>If the button doesn't work, copy and paste this link into your browser:</p>
+            <p><a href='$verify_link'>$verify_link</a></p>
             <br>
             <p>If you did not sign up, please ignore this email.</p>
         ";
 
-        send_verification_email($email, $token);
+        // Send verification email using Gmail API
+        $email_sent = send_email($email, $subject, $body);
 
-
-        echo "<p style='color:green;'>Signup successful! Please check your email to verify your account.</p>";
+        if ($email_sent) {
+            echo "<p style='color:green;'>Signup successful! Please check your email to verify your account.</p>";
+        } else {
+            echo "<p style='color:orange;'>Signup successful! However, there was an issue sending the verification email. Please contact support.</p>";
+        }
     } else {
         die("<p style='color:red;'>Error: Could not register user. <a href='signup_users.php'>Try again</a></p>");
     }

@@ -1,7 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 include("db.php");
-require_once 'email.php'; // Make sure the path is correct
+require_once 'email.php';
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
