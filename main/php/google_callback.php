@@ -51,8 +51,12 @@ $client = new Client();
 $client->setClientId(getenv('GOOGLE_CLIENT_ID'));
 $client->setClientSecret(getenv('GOOGLE_CLIENT_SECRET'));
 $client->setRedirectUri(getenv('GOOGLE_REDIRECT_URI'));
+$client->setAccessType('offline'); // Enable offline access to get refresh token
+$client->setPrompt('consent'); // Force consent screen to ensure refresh token
 $client->addScope("email");
 $client->addScope("profile");
+$client->addScope("https://www.googleapis.com/auth/gmail.send");
+$client->addScope("https://www.googleapis.com/auth/gmail.readonly");
 
 if (isset($_GET['code'])) {
     $token = $client->fetchAccessTokenWithAuthCode($_GET['code']);
