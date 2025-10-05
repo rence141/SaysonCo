@@ -74,10 +74,35 @@ if (isset($_GET['code'])) {
 
     $_SESSION['google_email'] = $googleUser->email;
     $_SESSION['google_name'] = $googleUser->name;
-
-    session_write_close();
-    header("Location: https://meta-shark.onrender.com/main/php/google_login_process.php");
-    exit;
+    
+    // Generate a 6-digit verification code
+    $verification_code = sprintf("%06d", mt_rand(0, 999999));
+    $_SESSION['google_verification_code'] = $verification_code;
+    $_SESSION['google_verification_time'] = time();
+    
+    // Send verification code via email
+    try {
+        // Set up email content
+        $to = $googleUser->email;
+        $subject = "Your Google Login Verification Code";
+        $message = "Hello " . $googleUser->name . ",\n\n";
+        $message .= "Your verification code for Google login is: " . $verification_code . "\n\n";
+        $message .= "This code will expire in 10 minutes.\n\n";
+        $message .= "If you did not request this code, please ignore this email.\n\n";
+        $message .= "Regards,\nSaysonCo Team";
+        
+        // Send email using PHP mail function
+        $headers = "From: noreply@saysonco.com\r\n";
+        mail($to, $subject, $message, $headers);
+        
+        // Redirect to verification page
+        header("Location: confirm_otp.php?type=google");
+        exit;
+    } catch (Exception $e) {
+        error_log("Failed to send verification email: " . $e->getMessage());
+        header("Location: ../../login_users.php?error=Failed to send verification email");
+        exit;
+    }
 
 } else {
     error_log("Google OAuth code not provided");

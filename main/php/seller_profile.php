@@ -1,5 +1,6 @@
 
 <?php
+// Remove blank line at the beginning of the file to prevent headers already sent issue
 session_start();
 require_once("db.php");
 
